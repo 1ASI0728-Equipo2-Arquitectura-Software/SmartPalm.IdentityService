@@ -1,0 +1,53 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: smartpalm_identity
+      POSTGRES_USER: smartpalm_identity
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "${IDENTITY_DB_PORT:-5433}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U smartpalm_identity -d smartpalm_identity"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - identity-postgres:/var/lib/postgresql/data
+
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    profiles: ["messaging"]
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  identity-api:
+    build:
+      context: .
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__IdentityDatabase: Host=postgres;Port=5432;Database=smartpalm_identity;Username=smartpalm_identity;Password=${POSTGRES_PASSWORD}
+      Jwt__Issuer: smartpalm.identity
+      Jwt__Audience: smartpalm.clients
+      Jwt__Key: ${JWT_KEY}
+      RabbitMq__Enabled: ${RABBITMQ_ENABLED:-false}
+      RabbitMq__Uri: amqp://guest:guest@rabbitmq:5672/
+      Seed__Enabled: "true"
+      Seed__AdminUsername: ${SEED_ADMIN_USERNAME}
+      Seed__AdminPassword: ${SEED_ADMIN_PASSWORD}
+      Seed__AdminEmail: ${SEED_ADMIN_EMAIL}
+      Seed__AdminFullName: SmartPalm Administrator
+    ports:
+      - "${IDENTITY_API_PORT:-5101}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  identity-postgres:

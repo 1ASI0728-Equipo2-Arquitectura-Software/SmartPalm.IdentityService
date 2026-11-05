@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="SmartPalm.IdentityService.API/SmartPalm.IdentityService.API.csproj" />
+  <Project Path="SmartPalm.IdentityService.API.Tests/SmartPalm.IdentityService.API.Tests.csproj" />
+</Solution>

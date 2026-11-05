@@ -1,0 +1,21 @@
+@SmartPalm.IdentityService.Api_HostAddress = http://localhost:5101
+@AccessToken = replace-with-access-token
+
+POST {{SmartPalm.IdentityService.Api_HostAddress}}/api/v1/Authentication/sign-in
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "replace-me"
+}
+
+###
+
+GET {{SmartPalm.IdentityService.Api_HostAddress}}/api/v1/subscriptions/plans
+Accept: application/json
+
+###
+
+GET {{SmartPalm.IdentityService.Api_HostAddress}}/api/v1/subscriptions
+Authorization: Bearer {{AccessToken}}
+Accept: application/json
