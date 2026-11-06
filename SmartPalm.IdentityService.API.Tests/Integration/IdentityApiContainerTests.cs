@@ -75,6 +75,32 @@ public class IdentityApiContainerTests : IAsyncLifetime
         });
 
         Assert.Equal(HttpStatusCode.Created, create.StatusCode);
+        var createdUser = await create.Content.ReadFromJsonAsync<JsonElement>();
+        var userId = createdUser.GetProperty("id").GetInt32();
+
+        var missingSubscription = await client.GetAsync($"/api/v1/admin/subscriptions/users/{userId}");
+        Assert.Equal(HttpStatusCode.NotFound, missingSubscription.StatusCode);
+
+        var subscriptionCreate = await client.PostAsJsonAsync("/api/v1/admin/subscriptions", new
+        {
+            userId,
+            planType = "Seed"
+        });
+        Assert.Equal(HttpStatusCode.Created, subscriptionCreate.StatusCode);
+
+        var pendingSubscription = await client.GetFromJsonAsync<JsonElement>(
+            $"/api/v1/admin/subscriptions/users/{userId}");
+        Assert.Equal("Pending", pendingSubscription.GetProperty("status").GetString());
+
+        var payment = await client.PostAsJsonAsync(
+            $"/api/v1/admin/subscriptions/users/{userId}/payments",
+            new { amount = 149m });
+        Assert.Equal(HttpStatusCode.Created, payment.StatusCode);
+
+        var activeSubscription = await client.GetFromJsonAsync<JsonElement>(
+            $"/api/v1/admin/subscriptions/users/{userId}");
+        Assert.Equal(userId, activeSubscription.GetProperty("userId").GetInt32());
+        Assert.Equal("Active", activeSubscription.GetProperty("status").GetString());
 
         await using var connection = new NpgsqlConnection(_postgres.GetConnectionString());
         await connection.OpenAsync();
