@@ -50,6 +50,18 @@ public class AdminSubscriptionsController(
             : Ok(subscription);
     }
 
+    [HttpGet("users/{userId:int}")]
+    public async Task<IActionResult> GetSubscriptionByUserId(
+        int userId,
+        CancellationToken cancellationToken)
+    {
+        var subscription = await queryService.HandleAdminAsync(
+            new GetSubscriptionByUserIdQuery(userId), cancellationToken);
+        return subscription is null
+            ? NotFound(new { message = "Subscription not found." })
+            : Ok(subscription);
+    }
+
     [HttpPost("users/{userId:int}/payments")]
     public async Task<IActionResult> ProcessPayment(
         int userId,
