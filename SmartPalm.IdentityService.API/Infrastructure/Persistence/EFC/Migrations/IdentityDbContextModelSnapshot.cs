@@ -23,6 +23,78 @@ namespace SmartPalm.IdentityService.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("SmartPalm.IdentityService.Domain.Model.Entities.UserDeletionOperation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime?>("CompletedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("completed_at_utc");
+
+                    b.Property<int>("CompletedServices")
+                        .HasColumnType("integer")
+                        .HasColumnName("completed_services");
+
+                    b.Property<string>("Error")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("error");
+
+                    b.Property<int>("ExpectedServices")
+                        .HasColumnType("integer")
+                        .HasColumnName("expected_services");
+
+                    b.Property<DateTime>("RequestedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("requested_at_utc");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("status");
+
+                    b.Property<int?>("UserId")
+                        .HasColumnType("integer")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_user_deletion_operations");
+
+                    b.HasIndex("UserId", "Status")
+                        .HasDatabaseName("ix_user_deletion_operations_user_id_status");
+
+                    b.ToTable("user_deletion_operations", "identity");
+                });
+
+            modelBuilder.Entity("SmartPalm.IdentityService.Domain.Model.Entities.UserDeletionServiceResult", b =>
+                {
+                    b.Property<Guid>("OperationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("operation_id");
+
+                    b.Property<string>("ServiceName")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("service_name");
+
+                    b.Property<DateTime>("CompletedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("completed_at_utc");
+
+                    b.Property<int>("DeletedRecords")
+                        .HasColumnType("integer")
+                        .HasColumnName("deleted_records");
+
+                    b.HasKey("OperationId", "ServiceName")
+                        .HasName("pk_user_deletion_service_results");
+
+                    b.ToTable("user_deletion_service_results", "identity");
+                });
+
             modelBuilder.Entity("SmartPalm.IdentityService.Domain.Subscriptions.PaymentTransaction", b =>
                 {
                     b.Property<int>("Id")
