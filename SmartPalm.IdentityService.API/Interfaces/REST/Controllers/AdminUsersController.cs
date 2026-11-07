@@ -13,7 +13,9 @@ namespace SmartPalm.IdentityService.Api.Controllers;
 [Route("api/v1/admin/users")]
 public class AdminUsersController(
     IdentityCommandService commandService,
-    IdentityQueryService queryService) : ControllerBase
+    IdentityQueryService queryService,
+    UserDeletionCommandService deletionCommandService,
+    UserDeletionQueryService deletionQueryService) : ControllerBase
 {
     [HttpPost]
     [ProducesResponseType<UserResponse>(StatusCodes.Status201Created)]
@@ -39,5 +41,35 @@ public class AdminUsersController(
     {
         var user = await queryService.HandleAsync(new GetUserByIdQuery(userId), cancellationToken);
         return user is null ? NotFound(new { message = "User not found." }) : Ok(user);
+    }
+
+    [HttpDelete("{userId:int}")]
+    public async Task<IActionResult> DeleteUser(int userId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var requesterId = int.TryParse(User.FindFirst("sub")?.Value, out var parsed) ? parsed : 0;
+            var operation = await deletionCommandService.DeleteAsync(userId, requesterId, cancellationToken);
+            return Accepted(
+                $"/api/v1/admin/users/deletion-operations/{operation.operationId}",
+                operation);
+        }
+        catch (KeyNotFoundException exception)
+        {
+            return NotFound(new { message = exception.Message });
+        }
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
+        {
+            return Conflict(new { message = exception.Message });
+        }
+    }
+
+    [HttpGet("deletion-operations/{operationId:guid}")]
+    public async Task<IActionResult> GetDeletionOperation(Guid operationId, CancellationToken cancellationToken)
+    {
+        var operation = await deletionQueryService.GetAsync(operationId, cancellationToken);
+        return operation is null
+            ? NotFound(new { message = "Deletion operation not found." })
+            : Ok(operation);
     }
 }
