@@ -37,6 +37,7 @@ public static class DependencyInjection
         services.AddScoped<IIntegrationEventWriter, IntegrationEventWriter>();
         services.AddScoped<IdentityCommandService>();
         services.AddScoped<IdentityQueryService>();
+        services.AddScoped<ReconciliationQueryService>();
         services.AddScoped<SubscriptionCommandService>();
         services.AddScoped<SubscriptionQueryService>();
         services.AddScoped<UserDeletionCommandService>();
