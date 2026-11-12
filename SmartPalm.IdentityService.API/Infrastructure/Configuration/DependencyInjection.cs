@@ -29,6 +29,7 @@ public static class DependencyInjection
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
         services.AddScoped<IPaymentRepository, PaymentRepository>();
+        services.AddScoped<IUserDeletionRepository, UserDeletionRepository>();
         services.AddScoped<IUnitOfWork>(provider => provider.GetRequiredService<IdentityDbContext>());
         services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.AddScoped<ITokenIssuer, JwtTokenIssuer>();
@@ -38,7 +39,10 @@ public static class DependencyInjection
         services.AddScoped<IdentityQueryService>();
         services.AddScoped<SubscriptionCommandService>();
         services.AddScoped<SubscriptionQueryService>();
+        services.AddScoped<UserDeletionCommandService>();
+        services.AddScoped<UserDeletionQueryService>();
         services.AddHostedService<OutboxPublisher>();
+        services.AddHostedService<UserDeletionCompletionConsumer>();
         return services;
     }
 }

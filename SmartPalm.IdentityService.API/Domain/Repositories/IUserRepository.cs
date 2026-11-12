@@ -9,5 +9,7 @@ public interface IUserRepository
     Task<IReadOnlyCollection<User>> ListAsync(CancellationToken cancellationToken = default);
     Task<bool> UsernameExistsAsync(string username, CancellationToken cancellationToken = default);
     Task<bool> EmailExistsAsync(string email, CancellationToken cancellationToken = default);
+    Task<int> CountAdministratorsAsync(CancellationToken cancellationToken = default);
+    void Remove(User user);
     void Add(User user);
 }
