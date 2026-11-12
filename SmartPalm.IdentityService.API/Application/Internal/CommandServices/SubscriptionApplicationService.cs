@@ -53,15 +53,19 @@ public class SubscriptionCommandService(
     {
         var subscription = await subscriptions.FindByUserIdAsync(command.UserId, cancellationToken)
             ?? throw new KeyNotFoundException("Subscription not found.");
-        subscription.Cancel();
-        eventWriter.Enqueue(
-            "smartpalm.identity.subscription-cancelled.v1",
-            new SubscriptionCancelledIntegrationEvent(
-                subscription.Id,
-                subscription.UserId,
-                DateTime.UtcNow));
-        await unitOfWork.SaveChangesAsync(cancellationToken);
-        return ToResponse(subscription);
+        return await unitOfWork.ExecuteInTransactionAsync(async innerToken =>
+        {
+            subscription.Cancel();
+            eventWriter.Enqueue(
+                "smartpalm.identity.subscription-cancelled.v1",
+                new SubscriptionCancelledIntegrationEvent(
+                    subscription.Id,
+                    subscription.UserId,
+                    DateTime.UtcNow,
+                    IsActive: false));
+            await unitOfWork.SaveChangesAsync(innerToken);
+            return ToResponse(subscription);
+        }, cancellationToken);
     }
 
     public async Task<PaymentResponse> ProcessPaymentAsync(
@@ -101,7 +105,8 @@ public class SubscriptionCommandService(
                     subscription.PlanType.ToString(),
                     subscription.StartDate,
                     subscription.EndDate,
-                    DateTime.UtcNow));
+                    DateTime.UtcNow,
+                    IsActive: true));
             await unitOfWork.SaveChangesAsync(innerToken);
             return ToResponse(payment);
         }, cancellationToken);

@@ -6,4 +6,5 @@ public record SubscriptionActivatedIntegrationEvent(
     string PlanType,
     DateTime StartDate,
     DateTime EndDate,
-    DateTime OccurredAtUtc);
+    DateTime OccurredAtUtc,
+    bool IsActive = true);
