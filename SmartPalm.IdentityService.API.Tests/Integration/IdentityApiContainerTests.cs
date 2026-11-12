@@ -102,18 +102,39 @@ public class IdentityApiContainerTests : IAsyncLifetime
         Assert.Equal(userId, activeSubscription.GetProperty("userId").GetInt32());
         Assert.Equal("Active", activeSubscription.GetProperty("status").GetString());
 
+        var cancel = await client.PostAsJsonAsync(
+            "/api/v1/admin/subscriptions/cancel",
+            new { userId });
+        Assert.Equal(HttpStatusCode.OK, cancel.StatusCode);
+
+        var cancelledSubscription = await client.GetFromJsonAsync<JsonElement>(
+            $"/api/v1/admin/subscriptions/users/{userId}");
+        Assert.Equal("Cancelled", cancelledSubscription.GetProperty("status").GetString());
+
         await using var connection = new NpgsqlConnection(_postgres.GetConnectionString());
         await connection.OpenAsync();
         var published = false;
-        for (var attempt = 0; attempt < 10 && !published; attempt++)
+        var cancellationEvent = false;
+        for (var attempt = 0; attempt < 10 && (!published || !cancellationEvent); attempt++)
         {
             await using var command = new NpgsqlCommand(
-                "SELECT COUNT(*) FROM identity.outbox_messages WHERE processed_on_utc IS NOT NULL",
+                """
+                SELECT
+                    COUNT(*) FILTER (WHERE processed_on_utc IS NOT NULL),
+                    COUNT(*) FILTER (
+                        WHERE event_type = 'smartpalm.identity.subscription-cancelled.v1'
+                          AND content::jsonb -> 'payload' ->> 'isActive' = 'false')
+                FROM identity.outbox_messages
+                """,
                 connection);
-            published = Convert.ToInt64(await command.ExecuteScalarAsync()) > 0;
-            if (!published) await Task.Delay(TimeSpan.FromSeconds(1));
+            await using var reader = await command.ExecuteReaderAsync();
+            await reader.ReadAsync();
+            published = reader.GetInt64(0) > 0;
+            cancellationEvent = reader.GetInt64(1) > 0;
+            if (!published || !cancellationEvent) await Task.Delay(TimeSpan.FromSeconds(1));
         }
 
         Assert.True(published, "The outbox message was not published within the retry window.");
+        Assert.True(cancellationEvent, "The cancellation event did not publish an explicit inactive plan state.");
     }
 }
