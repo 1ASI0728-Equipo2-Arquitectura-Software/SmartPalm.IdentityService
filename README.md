@@ -17,6 +17,7 @@ La demostración física comienza aquí: un Administrator inicia sesión, crea a
 - `GET /api/v1/subscriptions/payments`
 - `/api/v1/admin/users/*`
 - `/api/v1/admin/subscriptions/*`
+- `GET /api/v1/reconciliation/users/{userId}/snapshot` (Administrator authorization required)
 
 ## Ejecución local
 

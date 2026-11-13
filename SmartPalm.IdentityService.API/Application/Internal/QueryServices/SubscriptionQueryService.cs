@@ -37,6 +37,14 @@ public class SubscriptionQueryService(
         return subscription is null ? null : ToResponse(subscription);
     }
 
+    public async Task<AdminSubscriptionResponse?> HandleAdminAsync(
+        GetSubscriptionByUserIdQuery query,
+        CancellationToken cancellationToken = default)
+    {
+        var subscription = await subscriptions.FindByUserIdAsync(query.UserId, cancellationToken);
+        return subscription is null ? null : ToAdminResponse(subscription);
+    }
+
     public async Task<IReadOnlyCollection<SubscriptionResponse>> HandleAsync(
         GetAllSubscriptionsQuery query,
         CancellationToken cancellationToken = default) =>
@@ -48,6 +56,17 @@ public class SubscriptionQueryService(
         (await payments.ListByUserIdAsync(query.UserId, cancellationToken)).Select(ToResponse).ToArray();
 
     private static SubscriptionResponse ToResponse(Subscription entity) => new(
+        entity.PlanType.ToString(),
+        entity.PlanName,
+        entity.Price,
+        entity.Status.ToString(),
+        entity.StartDate.ToString("O"),
+        entity.EndDate.ToString("O"),
+        entity.BillingCycle.ToString(),
+        entity.CreatedAt.ToString("O"));
+
+    private static AdminSubscriptionResponse ToAdminResponse(Subscription entity) => new(
+        entity.UserId,
         entity.PlanType.ToString(),
         entity.PlanName,
         entity.Price,

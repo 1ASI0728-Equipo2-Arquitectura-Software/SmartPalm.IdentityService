@@ -8,4 +8,5 @@ public interface IPaymentRepository
         int userId,
         CancellationToken cancellationToken = default);
     void Add(PaymentTransaction payment);
+    void RemoveByUserId(int userId);
 }

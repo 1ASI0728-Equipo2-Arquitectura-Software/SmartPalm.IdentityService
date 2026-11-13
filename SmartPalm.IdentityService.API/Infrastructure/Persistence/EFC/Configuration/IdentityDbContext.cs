@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using SmartPalm.IdentityService.Domain.Repositories;
+using SmartPalm.IdentityService.Domain.Model.Entities;
 using SmartPalm.IdentityService.Domain.Subscriptions;
 using SmartPalm.IdentityService.Domain.Users;
 
@@ -12,6 +13,8 @@ public class IdentityDbContext(DbContextOptions<IdentityDbContext> options)
     public DbSet<Subscription> Subscriptions => Set<Subscription>();
     public DbSet<PaymentTransaction> Payments => Set<PaymentTransaction>();
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
+    public DbSet<UserDeletionOperation> UserDeletionOperations => Set<UserDeletionOperation>();
+    public DbSet<UserDeletionServiceResult> UserDeletionServiceResults => Set<UserDeletionServiceResult>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -73,6 +76,22 @@ public class IdentityDbContext(DbContextOptions<IdentityDbContext> options)
             builder.Property(message => message.Content).HasColumnType("jsonb").IsRequired();
             builder.Property(message => message.Error).HasMaxLength(2000);
             builder.HasIndex(message => new { message.ProcessedOnUtc, message.OccurredOnUtc });
+        });
+
+        modelBuilder.Entity<UserDeletionOperation>(builder =>
+        {
+            builder.ToTable("user_deletion_operations");
+            builder.HasKey(value => value.Id);
+            builder.Property(value => value.Status).HasConversion<string>().HasMaxLength(20).IsRequired();
+            builder.Property(value => value.Error).HasMaxLength(2000);
+            builder.HasIndex(value => new { value.UserId, value.Status });
+        });
+
+        modelBuilder.Entity<UserDeletionServiceResult>(builder =>
+        {
+            builder.ToTable("user_deletion_service_results");
+            builder.HasKey(value => new { value.OperationId, value.ServiceName });
+            builder.Property(value => value.ServiceName).HasMaxLength(50).IsRequired();
         });
     }
 

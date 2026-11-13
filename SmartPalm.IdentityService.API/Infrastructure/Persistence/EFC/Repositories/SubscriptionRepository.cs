@@ -20,4 +20,6 @@ internal class SubscriptionRepository(IdentityDbContext context) : ISubscription
             .ToArrayAsync(cancellationToken);
 
     public void Add(Subscription subscription) => context.Subscriptions.Add(subscription);
+    public void RemoveByUserId(int userId) => context.Subscriptions.RemoveRange(
+        context.Subscriptions.Where(subscription => subscription.UserId == userId));
 }

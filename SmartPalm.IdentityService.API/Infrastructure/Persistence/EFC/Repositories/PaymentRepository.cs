@@ -15,4 +15,6 @@ internal class PaymentRepository(IdentityDbContext context) : IPaymentRepository
             .ToArrayAsync(cancellationToken);
 
     public void Add(PaymentTransaction payment) => context.Payments.Add(payment);
+    public void RemoveByUserId(int userId) => context.Payments.RemoveRange(
+        context.Payments.Where(payment => payment.UserId == userId));
 }

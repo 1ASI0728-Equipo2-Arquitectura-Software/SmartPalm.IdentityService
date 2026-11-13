@@ -1,5 +1,6 @@
 using SmartPalm.IdentityService.Domain.Subscriptions;
 using SmartPalm.IdentityService.Domain.Services;
+using SmartPalm.IdentityService.Domain.Events;
 
 namespace SmartPalm.IdentityService.UnitTests;
 
@@ -41,5 +42,16 @@ public class SubscriptionTests
             seed => Assert.Equal((PlanType.Seed, 149m), (seed.Type, seed.Price)),
             harvest => Assert.Equal((PlanType.Harvest, 349m), (harvest.Type, harvest.Price)),
             custom => Assert.Equal((PlanType.Custom, 0m), (custom.Type, custom.Price)));
+    }
+
+    [Fact]
+    public void IntegrationEvents_ExposeAuthoritativePlanActivity()
+    {
+        var activated = new SubscriptionActivatedIntegrationEvent(
+            7, 42, "Seed", DateTime.UtcNow, DateTime.UtcNow.AddMonths(1), DateTime.UtcNow);
+        var cancelled = new SubscriptionCancelledIntegrationEvent(7, 42, DateTime.UtcNow);
+
+        Assert.True(activated.IsActive);
+        Assert.False(cancelled.IsActive);
     }
 }
